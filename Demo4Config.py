@@ -1,0 +1,8 @@
+WIDTH, HEIGHT = 500, 700
+
+# Game Constants
+GRAVITY = 0.4
+JUMP_STRENGTH = -7.0
+PIPE_SPEED = 3.5
+PIPE_GAP = 160
+PIPE_FREQUENCY = 90  # frames between pipes

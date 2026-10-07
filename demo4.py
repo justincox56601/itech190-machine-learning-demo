@@ -2,124 +2,29 @@ import sys
 import random
 import numpy as np
 import pygame
+from Bird import Bird
+from Pipe import Pipe
+from Demo4Config import *
 
 # Initialize Pygame
 pygame.init()
-WIDTH, HEIGHT = 500, 700
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Class 3: Flappy Bird AI (Neural Nets + Evolution)")
+pygame.display.set_caption("Demo 4: Flappy Bird AI (Neural Nets + Evolution)")
 CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("Consolas", 16)
 
-# Game Constants
-GRAVITY = 0.4
-JUMP_STRENGTH = -7.0
-PIPE_SPEED = 3.5
-PIPE_GAP = 160
-PIPE_FREQUENCY = 90  # frames between pipes
+
 
 # =====================================================================
 # STEP 1: Neural Network Architecture
+# BirdNeuralNetwork.py
 # =====================================================================
-class BirdBrain:
-    def __init__(self, input_size=3, hidden_size=6, output_size=1):
-        # Small weight initialization so initial actions aren't maxed out
-        self.W1 = np.random.randn(input_size, hidden_size) * 0.5
-        self.b1 = np.zeros((1, hidden_size))
-        self.W2 = np.random.randn(hidden_size, output_size) * 0.5
-        self.b2 = np.zeros((1, output_size))
-
-    def forward(self, inputs):
-        # inputs shape: (1, 3) -> [vel, dist_x, dist_y]
-        z1 = np.dot(inputs, self.W1) + self.b1
-        a1 = np.maximum(0, z1)  # ReLU
-        z2 = np.dot(a1, self.W2) + self.b2
-        # Sigmoid activation for binary jump decision (0.0 to 1.0)
-        output = 1.0 / (1.0 + np.exp(-z2))
-        return output[0][0]
-
-    def mutate(self, rate=0.15, magnitude=0.3):
-        child = BirdBrain()
-        child.W1 = self.W1.copy()
-        child.b1 = self.b1.copy()
-        child.W2 = self.W2.copy()
-        child.b2 = self.b2.copy()
-
-        for w in [child.W1, child.b1, child.W2, child.b2]:
-            mask = np.random.rand(*w.shape) < rate
-            w += mask * np.random.randn(*w.shape) * magnitude
-        return child
 
 # =====================================================================
 # STEP 2: Bird & Pipe Entities
+# Bird.py
+# Pipe.py
 # =====================================================================
-class Bird:
-    def __init__(self, brain=None):
-        self.x = 80
-        self.y = HEIGHT // 2
-        self.velocity = 0
-        self.alive = True
-        self.fitness = 0
-        self.score = 0
-        self.brain = brain if brain else BirdBrain()
-
-    def step(self, next_pipe):
-        if not self.alive:
-            return
-
-        self.fitness += 1
-        self.velocity += GRAVITY
-        self.y += self.velocity
-
-        # Prepare 3 normalized inputs for the neural network
-        dist_x = (next_pipe.x - self.x) / WIDTH
-        gap_center = next_pipe.top_height + (PIPE_GAP / 2)
-        dist_y = (gap_center - self.y) / HEIGHT
-        norm_vel = self.velocity / 15.0
-
-        inputs = np.array([[norm_vel, dist_x, dist_y]])
-
-        # Jump if network output exceeds 0.5 confidence threshold
-        if self.brain.forward(inputs) > 0.5:
-            self.velocity = JUMP_STRENGTH
-
-        # Boundary checks (floor or ceiling crash)
-        if self.y <= 0 or self.y >= HEIGHT - 20:
-            self.alive = False
-
-    def draw(self, surface, is_best=False):
-        if not self.alive:
-            return
-        color = (255, 220, 0) if is_best else (200, 100, 100)
-        alpha_color = color if is_best else (180, 180, 180)
-        pygame.draw.circle(surface, alpha_color, (int(self.x), int(self.y)), 12)
-        pygame.draw.circle(surface, (0, 0, 0), (int(self.x), int(self.y)), 12, 2)
-
-
-class Pipe:
-    def __init__(self, x):
-        self.x = x
-        self.width = 60
-        self.top_height = random.randint(80, HEIGHT - PIPE_GAP - 120)
-        self.bottom_y = self.top_height + PIPE_GAP
-        self.passed = False
-
-    def update(self):
-        self.x -= PIPE_SPEED
-
-    def draw(self, surface):
-        # Top Pipe
-        pygame.draw.rect(surface, (70, 180, 80), (self.x, 0, self.width, self.top_height))
-        pygame.draw.rect(surface, (40, 120, 50), (self.x, 0, self.width, self.top_height), 3)
-        # Bottom Pipe
-        pygame.draw.rect(surface, (70, 180, 80), (self.x, self.bottom_y, self.width, HEIGHT - self.bottom_y))
-        pygame.draw.rect(surface, (40, 120, 50), (self.x, self.bottom_y, self.width, HEIGHT - self.bottom_y), 3)
-
-    def check_collision(self, bird):
-        if bird.x + 12 > self.x and bird.x - 12 < self.x + self.width:
-            if bird.y - 12 < self.top_height or bird.y + 12 > self.bottom_y:
-                return True
-        return False
 
 # =====================================================================
 # STEP 3: Evolutionary Simulation Loop

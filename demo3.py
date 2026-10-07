@@ -10,7 +10,7 @@ from Track import *
 pygame.init()
 WIDTH, HEIGHT = 1000, 700
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Class 3: Self-Driving Car (Raycast Sensors + Neural Nets)")
+pygame.display.set_caption("Demo 3: Self-Driving Car (Raycast Sensors + Neural Nets)")
 CLOCK = pygame.time.Clock()
 FONT = pygame.font.SysFont("Consolas", 16)
 
